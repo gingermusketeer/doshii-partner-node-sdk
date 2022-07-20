@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosStatic } from "axios";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import WebSocket from "ws";
@@ -151,6 +151,7 @@ export default class Doshii {
     }
   > = new Map();
   private eventSubscribers: Map<WebsocketEvents, Array<string>> = new Map();
+  private axios: AxiosStatic | AxiosInstance;
 
   readonly location: Location;
   readonly order: Order;
@@ -175,6 +176,7 @@ export default class Doshii {
       pingInterval?: number;
       apiUrlOverride?: string;
       websocketUrlOverride?: string;
+      axios?: AxiosInstance;
     }
   ) {
     this.logger = options?.logLevel
@@ -204,6 +206,7 @@ export default class Doshii {
     if (options?.appId) this.generateApiKey(options.appId);
 
     if (options?.pingInterval) this.pingInterval = options.pingInterval;
+    this.axios = options?.axios ?? axios;
   }
 
   private generateApiKey(appId: string) {
@@ -218,7 +221,7 @@ export default class Doshii {
       timestamp: Math.round(Date.now() / 1000),
     };
     try {
-      const resp = await axios.request({
+      const resp = await this.axios.request({
         ...data,
         baseURL: this.url,
         headers: {
